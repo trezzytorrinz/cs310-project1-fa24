@@ -33,9 +33,43 @@ public class ClassSchedule {
     private final String SUBJECTID_COL_HEADER = "subjectid";
     
     public String convertCsvToJsonString(List<String[]> csv) {
+       
+        // Objects needed for separation
         
-        return ""; // remove this!
+        JsonArray jArray = new JsonArray();
         
+        // Check to see if csv equal anything and if not will return empty array
+        if (csv == null || csv.isEmpty()){
+            return jArray.toString();
+        }
+        
+        // Suppose to assume the first row is the headers
+        String [] headers = csv.get(0);
+        
+        // Iteration through csv rows
+        for (String[] row : csv.subList(1, csv.size())){
+            HashMap<String, String> rowM = new HashMap<>();
+            
+            // Iteration for headers and rows
+            Iterator<String> headerIterator = List.of(headers).iterator();
+            Iterator<String> rowIterator = List.of(row).iterator();
+
+            while (headerIterator.hasNext() && rowIterator.hasNext()){
+                rowM.put(headerIterator.next(), rowIterator.next());
+            }
+            
+            
+            // Conversion into JsonObject and placed in JsonArray
+            
+            JsonObject jObject = new JsonObject();
+            for (String key : rowM.keySet()){
+                jObject.put(key, rowM.get(key));
+            }
+            
+            jArray.add(jObject);
+        }
+        
+        return jArray.toString();
     }
     
     public String convertJsonToCsvString(JsonObject json) {
