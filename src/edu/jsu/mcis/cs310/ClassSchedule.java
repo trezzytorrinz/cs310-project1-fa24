@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ClassSchedule {
@@ -55,7 +56,7 @@ public class ClassSchedule {
         for (int i = 1; i < csv.size(); i++){
             String[] column = csv.get(i);
             
-            String crn = column[0];
+            int crn = Integer.parseInt(column[0]);
             String subject = column[1];
             String num = column[2];
             String description = column[3];
@@ -64,7 +65,7 @@ public class ClassSchedule {
             String[] parts = num.split(" ");
             String courseKey = parts[0];
             String courseNum = parts[1]; 
-            String credits = column[6];
+            int credits = Integer.parseInt(column[6]);
             String start = column[7];
             String end = column[8];
             String days = column[9];
@@ -75,7 +76,7 @@ public class ClassSchedule {
                     
             
             // Object for Course Entry
-            JsonObject courseDetails = new JsonObject();
+            HashMap<String, Object> courseDetails = new LinkedHashMap();
             courseDetails.put("subjectid", courseKey);
             courseDetails.put("num", courseNum);
             courseDetails.put("description", description);
@@ -85,14 +86,12 @@ public class ClassSchedule {
             courseObj.put(num, courseDetails);
             
             // Object for Section Entry
-            JsonObject sectionDetails = new JsonObject();
+            HashMap<String, Object> sectionDetails = new LinkedHashMap<>();
             sectionDetails.put("crn", crn);
-            System.out.println(sectionDetails);
-            sectionDetails.put("subjectid", courseKey);
-            System.out.println(sectionDetails);
-            sectionDetails.put("num", courseNum);
-            sectionDetails.put("section", section);
-            sectionDetails.put("type", scheduleTypeAbbreviation);
+            sectionDetails.put("subject", courseKey);
+            sectionDetails.put("num", courseNum); // Causing issues
+            sectionDetails.put("section", section); // Causing issues
+            sectionDetails.put("type", scheduleTypeAbbreviation); // Causing issues
             sectionDetails.put("start", start);
             sectionDetails.put("end", end);
             sectionDetails.put("days", days);
@@ -101,11 +100,10 @@ public class ClassSchedule {
             // Instructor separation
             JsonArray instructorArray = new JsonArray();
             instructorArray.add(instructor);
-            sectionObj.put("instructor", instructorArray);
+            sectionDetails.put("instructor", instructorArray);
             // Merging the two together
-            sectionObj.put(num, sectionDetails);
             
-            sectionArray.add(sectionObj);
+            sectionArray.add(sectionDetails);
             
             // Checks for scheduletype and subject
             if (!scheduleTypeMap.containsKey(scheduleTypeAbbreviation)){
@@ -132,12 +130,12 @@ public class ClassSchedule {
             
         // Adding the section headers with their details to main object
         
-        System.out.println(sectionArray);
+        
         mainObj.put("scheduletype", scheduleTypeObj);
         mainObj.put("subject", subjectObj);
         mainObj.put("course", courseObj);
         mainObj.put("section", sectionArray);
-        
+        System.out.println(mainObj);
         
         
         return mainObj.toString();
