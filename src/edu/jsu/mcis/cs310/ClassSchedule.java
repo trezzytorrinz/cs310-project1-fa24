@@ -10,8 +10,7 @@ import java.io.StringWriter;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator; 
-
+import java.util.Iterator;
 
 
 public class ClassSchedule {
@@ -39,8 +38,6 @@ public class ClassSchedule {
         // Step 1: Create objects
         JsonObject mainObj = new JsonObject();
 
-        
-        
         // Step 2: Create HashMaps for special headers
         HashMap<String, String> scheduleTypeMap = new HashMap<>();
         HashMap<String, String> subjectMap = new HashMap<>();
@@ -52,24 +49,19 @@ public class ClassSchedule {
         
         
         // Step 3: Separate the columns 
-        for (int i = 1; i < csv.size(); i++){
+        for (int i = 0; i < csv.size(); i++){
             String[] column = csv.get(i);
             
-            if(column[i].isEmpty()){
-                continue;
-            }
+            // Checks to see if the field is empty
             
             
-            int crn = Integer.parseInt(column[0]);
+            String crn = column[0];
             String subject = column[1];
             String num = column[2];
             String description = column[3];
             String section = column[4];
             String scheduleTypeAbbreviation = column[5];
-            String[] parts = num.split(" ");
-            String courseKey = parts[0];
-            String courseNum = parts[1]; 
-            int credits = Integer.parseInt(column[6]);
+            String credits = column[6];
             String start = column[7];
             String end = column[8];
             String days = column[9];
@@ -77,6 +69,11 @@ public class ClassSchedule {
             String scheduleTypeFull = column[11];
             String instructor = column[12];
             
+            
+            
+            String[] parts = num.split(" ");
+            String courseKey = parts[0];
+            String courseNum = parts[1]; 
             // Populating subject and scheduletype
             scheduleTypeMap.put(scheduleTypeAbbreviation, scheduleTypeFull);
             subjectMap.put(parts[0], subject);
@@ -154,69 +151,44 @@ public class ClassSchedule {
     public String convertJsonToCsvString(JsonObject json) {
         
         /// Step 1: Create a list 
-        List<String[]> csvData = new ArrayList<>();
+        StringWriter stringWriter = new StringWriter();
+        CSVWriter csvWriter = new CSVWriter(stringWriter);
         
         // Step 2: Add CSV headers
         String[] headers = {"crn", "subject", "num", "description", "section", "type", "credits", "start", "end", "days", "where", "schedule", "instructor"};
-        csvData.add(headers);
+        csvWriter.writeNext(headers);
         
         //Json Array
-        JsonArray sectionArray = (JsonArray) json.get("section");
+        JsonArray jsonArray = (JsonArray) json.get("section");
         
-        for (int i = 0; i < sectionArray.size(); i++) {
+        for (Object obj : jsonArray) {
             
-            JsonObject section = (JsonObject) sectionArray.get(i);
-
-            // Create a string array for the row
+            JsonObject section = (JsonObject) obj;
+            
             String[] column = new String[headers.length];
+            // Populate the row based on JSON structure
+            
+            column[0] = section.get("crn").toString();
+            JsonObject subjectMap = (JsonObject) json.get("subject");
+            column[1] = subjectMap.get(section.get("subjectid").toString()).toString();
+            column[2] = section.get("num").toString();
+            JsonObject courseMap = (JsonObject) json.get("course");
+            column[3] = courseMap.get("description").toString();
+            column[4] = section.get("section").toString();
+            JsonObject scheduleTypeMap = (JsonObject) json.get("scheduletype");
+            column[5] = scheduleTypeMap.get(section.get("type").toString()).toString();            
+            column[6] = courseMap.get("credits").toString();
+            column[7] = section.get("start").toString(); 
+            column[8] = section.get("end").toString(); 
+            column[9] = section.get("days").toString();
+            column[10] = section.get("where").toString(); 
+            column[11] = String.join(", ", (List<String>) section.get("instructor")); 
 
-            column[0] = section.get("crn").toString(); // CRN
-            String subjectId = section.get("subjectid").toString();
-
-            // Access subject name
-            String subjectName = json.get("subject").toString();
-            column[1] = subjectName; // Subject name
-
-            String courseNumber = section.get("num").toString();
-            String courseKey = subjectId + " " + courseNumber;
-
-            // Access course details
-            JsonObject courseDetails = (JsonObject) json.get("course");
-            column[2] = courseNumber; // Num
-            column[3] = (courseDetails != null) ? courseDetails.get("description").toString() : "N/A"; // Description
-
-            column[4] = section.get("section").toString(); // Section
-            column[5] = section.get("type").toString(); // Type
-            column[6] = section.get("credits").toString(); // Credits
-            column[7] = section.get("start").toString(); // Start time
-            column[8] = section.get("end").toString(); // End time
-            column[9] = section.get("days").toString(); // Days
-            column[10] = section.get("where").toString(); // Location
-            column[11] = json.get("scheduletype").toString(); // Schedule type
-
-            // Handle instructors
-            JsonArray instructors = (JsonArray) section.get("instructor");
-            StringBuilder instructorsList = new StringBuilder();
-            if (instructors != null) {
-                for (int j = 0; j < instructors.size(); j++) {
-                    instructorsList.append(instructors.get(j).toString());
-                    if (j < instructors.size() - 1) {
-                        instructorsList.append(", ");
-                    }
-                }
-            }
-            column[12] = instructorsList.toString(); // Instructors
-
-
-        }
-        StringWriter writer = new StringWriter();
-        CSVWriter csvWriter = new CSVWriter(writer);
-        csvWriter.writeAll(csvData);
+            // Write the populated row to the CSV
+            csvWriter.writeNext(column);
+        } 
         
-        System.out.println(csvData);
-        System.out.println("Final CSV Output:\n" + writer.toString());
-
-       return writer.toString();
+        return stringWriter.toString(); // Return the CSV string    
     }
     
         
